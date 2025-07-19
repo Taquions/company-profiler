@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import ContactModal from './ContactModal';
 import { validateUrl } from '../utils/validation';
-import { hasCachedUserData } from '../utils/cache';
 
 interface WelcomeScreenProps {
     onUrlSubmit: (data: { url: string; email: string; poc: string }) => void;
@@ -17,12 +16,6 @@ export default function WelcomeScreen({ onUrlSubmit, isLoading, errorMessage, on
     const [showModal, setShowModal] = useState(false);
     const [urlError, setUrlError] = useState('');
     const [normalizedUrl, setNormalizedUrl] = useState('');
-    const [hasCache, setHasCache] = useState(false);
-
-    // Check for cached data on component mount
-    useEffect(() => {
-        setHasCache(hasCachedUserData());
-    }, []);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -58,7 +51,6 @@ export default function WelcomeScreen({ onUrlSubmit, isLoading, errorMessage, on
 
     const handleModalSubmit = (data: { email: string; poc: string; url: string }) => {
         setShowModal(false);
-        setHasCache(true); // Update cache status after successful submission
         onUrlSubmit({ url: data.url, email: data.email, poc: data.poc });
     };
 

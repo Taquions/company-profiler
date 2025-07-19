@@ -1,21 +1,4 @@
-import { openai } from '@ai-sdk/openai';
-import { streamText } from 'ai';
-import { tools } from './tools';
-
-export const maxDuration = 60;
-
-export async function POST(req: Request) {
-    const { messages } = await req.json();
-
-    console.log('🚀 LLM API Call Started:', {
-        messageCount: messages.length,
-        lastMessage: messages[messages.length - 1]?.content?.substring(0, 200) + '...',
-        timestamp: new Date().toISOString()
-    });
-
-    const result = await streamText({
-        model: openai('gpt-4.1-mini'),
-        system: `You are a specialized AI agent designed to analyze company websites and extract structured business information to create comprehensive company profiles. Your primary function is to help users understand companies and their potential for government contracting opportunities.
+export const SYSTEM_PROMPT = `You are a specialized AI agent designed to analyze company websites and extract structured business information to create comprehensive company profiles. Your primary function is to help users understand companies and their potential for government contracting opportunities.
 
 IMPORTANT: You must follow this EXACT sequence when processing a company website:
 
@@ -25,6 +8,7 @@ IMPORTANT: You must follow this EXACT sequence when processing a company website
    - All extracted company information
    - The logo_base64 parameter: set to empty string "" (logo will be loaded asynchronously)
 4. OPTIONAL: After redirectToProfile, you MAY use the getCompanyLogo tool to fetch the company logo asynchronously, but this should NOT block the profile redirect
+5. FINAL STEP: After using all tools, provide a comprehensive summary response of what you learned about the company, including all the fields you populated (company name, description, service lines, keywords, contact info, etc.)
 
 The logo loading is now handled asynchronously on the frontend, so DO NOT wait for getCompanyLogo before calling redirectToProfile.
 
@@ -53,16 +37,4 @@ Examples of good vs bad keywords:
 - Good: "Software", "Consulting", "Engineering", "Healthcare", "Construction"
 - Bad: "JavaScript", "React", "AI/ML", "Cloud Computing", "Digital Transformation"
 
-Always provide clear, actionable insights about the company's business profile and potential government contracting relevance. Keep all outputs concise and focused on the most relevant information. All communication should be in English.`,
-        messages,
-        tools,
-    });
-
-    console.log('✅ LLM Stream Text Created:', {
-        modelUsed: 'gpt-4.1-mini',
-        toolsAvailable: ['getWebsiteContent', 'getCompanyLogo', 'returnToHomeWithError', 'redirectToProfile'],
-        timestamp: new Date().toISOString()
-    });
-
-    return result.toDataStreamResponse();
-}
+Always provide clear, actionable insights about the company's business profile and potential government contracting relevance. Keep all outputs concise and focused on the most relevant information. All communication should be in English.`; 

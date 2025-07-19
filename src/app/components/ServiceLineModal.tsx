@@ -18,14 +18,14 @@ export default function ServiceLineModal({
     isGenerating = false
 }: ServiceLineModalProps) {
     const [additionalContext, setAdditionalContext] = useState('');
-    const [quantity, setQuantity] = useState(3);
+    const [quantity, setQuantity] = useState(1);
 
     if (!isOpen) return null;
 
     const handleGenerate = () => {
+        console.log('🔢 ServiceLineModal sending quantity:', quantity);
         onGenerate(additionalContext, quantity);
         setAdditionalContext('');
-        setQuantity(3);
     };
 
     const handleManualAdd = () => {
@@ -105,8 +105,8 @@ export default function ServiceLineModal({
                         <label className="block text-sm font-medium text-gray-300 mb-2">
                             Number of Service Lines
                         </label>
-                        <div className="grid grid-cols-5 gap-2">
-                            {[1, 2, 3, 4, 5].map((num) => (
+                        <div className="grid grid-cols-3 gap-2">
+                            {[1, 2, 3].map((num) => (
                                 <button
                                     key={num}
                                     onClick={() => setQuantity(num)}

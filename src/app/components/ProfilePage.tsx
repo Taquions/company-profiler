@@ -5,110 +5,26 @@ import { Message } from 'ai';
 import ServiceLineModal from './ServiceLineModal';
 import AddItemModal from './AddItemModal';
 import Image from 'next/image';
+import { CompanyProfile } from '../agent/types';
+import { useAsyncLogo } from '../hooks/useAsyncLogo';
+import { useServiceLineGeneration } from '../hooks/useServiceLineGeneration';
+import { LogoService } from '../agent/services/logo-service';
 
-interface CompanyProfile {
-  companyName: string;
-  description: string;
-  serviceLines: string[];
-  tier1Keywords: string[];
-  tier2Keywords: string[];
-  emails: string[];
-  pointOfContact: string;
-  logoBase64?: string;
-}
+
 
 interface ProfilePageProps {
   initialProfile: CompanyProfile;
-  messages: Message[];
+  messages?: Message[];
   onBack: () => void;
 }
 
-// Custom hook for async logo loading
-function useAsyncLogo(companyName: string, websiteUrl?: string) {
-  const [logoBase64, setLogoBase64] = useState<string | null>(null);
-  const [isLoadingLogo, setIsLoadingLogo] = useState(false);
-  const [logoError, setLogoError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let isMounted = true;
 
-    const loadLogo = async () => {
-      // First, try to load from localStorage
-      try {
-        const savedLogo = localStorage.getItem(`company_logo_${companyName}`);
-        if (savedLogo && isMounted) {
-          setLogoBase64(savedLogo);
-          console.log('🔄 Logo loaded from localStorage for:', companyName);
-          return;
-        }
-      } catch (error) {
-        console.warn('⚠️ Failed to load logo from localStorage:', error);
-      }
-
-      // If no logo in localStorage and we have a website URL, try to fetch it
-      if (websiteUrl && isMounted) {
-        setIsLoadingLogo(true);
-        setLogoError(null);
-        
-        try {
-          console.log('🎨 Starting async logo fetch for:', companyName);
-          
-          // Get website content first
-          const websiteResponse = await fetch('/api/logo', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url: websiteUrl, companyName })
-          });
-
-          if (!websiteResponse.ok) {
-            throw new Error(`HTTP ${websiteResponse.status}`);
-          }
-
-          const logoData = await websiteResponse.json();
-          
-          if (logoData.success && logoData.logoBase64 && isMounted) {
-            setLogoBase64(logoData.logoBase64);
-            
-            // Save to localStorage for future use
-            try {
-              localStorage.setItem(`company_logo_${companyName}`, logoData.logoBase64);
-              console.log('✅ Logo fetched and saved to localStorage for:', companyName);
-            } catch (error) {
-              console.warn('⚠️ Failed to save logo to localStorage:', error);
-            }
-          } else if (isMounted) {
-            setLogoError(logoData.error || 'Failed to load logo');
-            console.log('❌ Logo fetch failed:', logoData.error);
-          }
-        } catch (error) {
-          if (isMounted) {
-            setLogoError(error instanceof Error ? error.message : 'Unknown error');
-            console.log('❌ Logo fetch error:', error);
-          }
-        } finally {
-          if (isMounted) {
-            setIsLoadingLogo(false);
-          }
-        }
-      }
-    };
-
-    loadLogo();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [companyName, websiteUrl]);
-
-  return { logoBase64, isLoadingLogo, logoError };
-}
-
-export default function ProfilePage({ initialProfile, messages, onBack }: ProfilePageProps) {
+export default function ProfilePage({ initialProfile, onBack }: ProfilePageProps) {
   const [profile, setProfile] = useState<CompanyProfile>(initialProfile);
   const [isEditing, setIsEditing] = useState(false);
   const [showLogo, setShowLogo] = useState(true);
   const [showServiceLineModal, setShowServiceLineModal] = useState(false);
-  const [isGeneratingServiceLines, setIsGeneratingServiceLines] = useState(false);
   const [agentMemory, setAgentMemory] = useState<Message[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalConfig, setModalConfig] = useState<{
@@ -126,11 +42,29 @@ export default function ProfilePage({ initialProfile, messages, onBack }: Profil
     return undefined;
   });
 
-  // Use the async logo hook
-  const { logoBase64: asyncLogo, isLoadingLogo, logoError } = useAsyncLogo(
+  // Use hooks for logo and service line generation
+  const { logoBase64: asyncLogo, isLoadingLogo } = useAsyncLogo(
     initialProfile.companyName, 
     websiteUrl
   );
+  
+  const { generateServiceLines, isGenerating: isGeneratingServiceLines } = useServiceLineGeneration();
+
+  // Load agent conversation from sessionStorage on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const savedConversation = sessionStorage.getItem('agent_conversation');
+        if (savedConversation) {
+          const conversation = JSON.parse(savedConversation);
+          setAgentMemory([conversation.userMessage, conversation.assistantMessage]);
+          console.log('🧠 Loaded agent conversation from sessionStorage:', conversation);
+        }
+      } catch (error) {
+        console.warn('⚠️ Failed to load agent conversation:', error);
+      }
+    }
+  }, []);
 
   // Update profile when async logo is loaded
   useEffect(() => {
@@ -147,17 +81,14 @@ export default function ProfilePage({ initialProfile, messages, onBack }: Profil
   // Clear agent memory and localStorage when component unmounts
   useEffect(() => {
     return () => {
-      // Clear agent memory
       setAgentMemory([]);
-      
-      // Clear company logo from localStorage
-      try {
-        const logoKey = `company_logo_${profile.companyName}`;
-        localStorage.removeItem(logoKey);
-        console.log('🧠 Agent memory and logo cleared on page exit for:', profile.companyName);
-      } catch (error) {
-        console.warn('⚠️ Failed to clear logo from localStorage:', error);
+      LogoService.removeFromLocalStorage(profile.companyName);
+      // Clear the agent conversation from sessionStorage
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('agent_conversation');
+        sessionStorage.removeItem('original_user_prompt');
       }
+      console.log('🧠 Agent memory and logo cleared on page exit for:', profile.companyName);
     };
   }, [profile.companyName]);
 
@@ -233,130 +164,38 @@ export default function ProfilePage({ initialProfile, messages, onBack }: Profil
     setModalOpen(true);
   };
 
-  const generateServiceLines = async (additionalContext: string, quantity: number) => {
-    setIsGeneratingServiceLines(true);
-    
+  const handleGenerateServiceLines = async (additionalContext: string, quantity: number) => {
+    console.log('🎯 ProfilePage received quantity:', quantity);
     try {
-      // Create detailed prompt for LLM
-      const prompt = `I need you to generate ${quantity} new service lines for my company. Please analyze the company profile below and suggest relevant service lines that would complement our existing offerings.
+      const uniqueServiceLines = await generateServiceLines(profile, additionalContext, quantity, agentMemory);
+      
+      // Add the generated service lines to the profile
+      setProfile(prev => ({
+        ...prev,
+        serviceLines: [...prev.serviceLines, ...uniqueServiceLines]
+      }));
 
-**Company Information:**
-- Company Name: ${profile.companyName}
-- Description: ${profile.description}
-- Current Service Lines: ${profile.serviceLines.join(', ')}
-- Tier 1 Keywords: ${profile.tier1Keywords.join(', ')}
-- Tier 2 Keywords: ${profile.tier2Keywords.join(', ')}
-${additionalContext ? `- Additional Context: ${additionalContext}` : ''}
-
-**Requirements:**
-- Generate exactly ${quantity} new service lines
-- Avoid duplicating existing service lines
-- Make them relevant to the company's business profile
-- Focus on professional services that could realistically be offered
-- Consider government contracting opportunities
-
-Please respond with ONLY a JSON array of strings, no other text. Example format:
-["Service Line 1", "Service Line 2", "Service Line 3"]`;
-
+      // Update agent memory
       const newUserMessage: Message = {
         id: Date.now().toString(),
         role: 'user',
-        content: prompt
+        content: `Generate ${quantity} service lines with context: ${additionalContext}`
+      };
+      
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: `Generated ${uniqueServiceLines.length} new service lines: ${uniqueServiceLines.join(', ')}`
       };
 
-      // Filter agent memory to exclude any logo data to save tokens
-      const cleanAgentMemory = agentMemory.map(msg => ({
-        ...msg,
-        content: typeof msg.content === 'string' 
-          ? msg.content.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]+/g, '[LOGO_REMOVED]')
-          : msg.content
-      }));
-
-      const messagesWithContext = [...cleanAgentMemory, newUserMessage];
-
-      console.log('🔧 Generating service lines with LLM:', {
-        companyName: profile.companyName,
-        quantity,
-        hasAdditionalContext: !!additionalContext,
-        memoryMessages: cleanAgentMemory.length
-      });
-
-      const response = await fetch('/agent', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          messages: messagesWithContext
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to generate service lines');
-      }
-
-      const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error('No response body');
-      }
-
-      let result = '';
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        result += new TextDecoder().decode(value);
-      }
-
-      // Extract JSON from the LLM response
-      try {
-        // Try to find JSON array in the response
-        const jsonMatch = result.match(/\[[\s\S]*\]/);
-        if (!jsonMatch) {
-          throw new Error('No JSON array found in response');
-        }
-
-        const generatedServiceLines = JSON.parse(jsonMatch[0]);
-        
-        if (!Array.isArray(generatedServiceLines) || generatedServiceLines.length === 0) {
-          throw new Error('Invalid service lines format');
-        }
-
-        // Filter out any duplicates with existing service lines
-        const uniqueServiceLines = generatedServiceLines.filter(line => 
-          !profile.serviceLines.includes(line)
-        );
-
-        // Add the generated service lines to the profile
-        setProfile(prev => ({
-          ...prev,
-          serviceLines: [...prev.serviceLines, ...uniqueServiceLines]
-        }));
-
-        // Add to agent memory
-        const assistantMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: `Generated ${uniqueServiceLines.length} new service lines: ${uniqueServiceLines.join(', ')}`
-        };
-
-        setAgentMemory(prev => [...prev, newUserMessage, assistantMessage]);
-        console.log('✅ Service lines generated successfully:', {
-          total: uniqueServiceLines.length,
-          serviceLines: uniqueServiceLines
-        });
-
-        setShowServiceLineModal(false);
-
-      } catch (parseError) {
-        console.error('Error parsing LLM response:', parseError);
-        throw new Error('Failed to parse generated service lines');
-      }
-
+      setAgentMemory(prev => [...prev, newUserMessage, assistantMessage]);
+      setShowServiceLineModal(false);
+      
+      console.log('✅ Service lines added to profile:', uniqueServiceLines);
+      console.log('🧠 Agent memory updated with new conversation');
     } catch (error) {
       console.error('Error generating service lines:', error);
       alert('Failed to generate service lines. Please try again.');
-    } finally {
-      setIsGeneratingServiceLines(false);
     }
   };
 
@@ -472,6 +311,9 @@ Please respond with ONLY a JSON array of strings, no other text. Example format:
       {/* Subtle decorative elements */}
       <div className="absolute top-[-10%] left-[-10%] w-80 h-80 bg-blue-600 rounded-full opacity-20 filter blur-3xl"></div>
       <div className="absolute bottom-[-10%] right-[-5%] w-96 h-96 bg-slate-600 rounded-full opacity-20 filter blur-3xl"></div>
+      
+      {/* Additional overlay */}
+      <div className="absolute inset-0 bg-black/40"></div>
       
       {/* Content */}
       <div className="relative z-10 min-h-screen p-6">
@@ -641,7 +483,7 @@ Please respond with ONLY a JSON array of strings, no other text. Example format:
       <ServiceLineModal
         isOpen={showServiceLineModal}
         onClose={() => setShowServiceLineModal(false)}
-        onGenerate={generateServiceLines}
+        onGenerate={handleGenerateServiceLines}
         onManualAdd={addServiceLineManually}
         isGenerating={isGeneratingServiceLines}
       />
