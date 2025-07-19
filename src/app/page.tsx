@@ -1,103 +1,167 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { useState, Suspense } from 'react';
+import { useChat } from '@ai-sdk/react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import WelcomeScreen from './components/WelcomeScreen';
+import LoadingState from './components/LoadingState';
+import DebugModal from './components/DebugModal';
+
+type AppState = 'welcome' | 'loading';
+
+function HomePageComponent() {
+  const [appState, setAppState] = useState<AppState>('welcome');
+  const [showDebugModal, setShowDebugModal] = useState(false);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // Get error from URL parameter
+  const errorMessage = searchParams.get('error') || undefined;
+
+  const { append, messages, isLoading } = useChat({
+    api: '/agent',
+    maxSteps: 10,
+    onFinish: (message) => {
+      console.log('🎬 LLM Chat onFinish called:', {
+        messageId: message.id,
+        role: message.role,
+        createdAt: message.createdAt,
+        partsCount: message.parts?.length || 0,
+        fullMessage: message
+      });
+
+      try {
+        if (!message.parts) {
+          console.log('❌ No parts in message');
+          throw new Error('No parts in message');
+        }
+
+        // Check for tool invocations
+        for (const part of message.parts) {
+          if (part.type === 'tool-invocation') {
+            const toolName = part.toolInvocation.toolName;
+
+            console.log('🔧 Tool Invocation Found:', {
+              toolName,
+              args: part.toolInvocation.args,
+              toolCallId: part.toolInvocation.toolCallId
+            });
+
+            if (toolName === 'returnToHomeWithError') {
+              const errorMessage = part.toolInvocation.args.error_message;
+              console.log('🔄 Redirecting to home with error:', errorMessage);
+              // Refresh page with error
+              window.location.href = `/?error=${encodeURIComponent(errorMessage)}`;
+              return;
+            }
+
+            if (toolName === 'redirectToProfile') {
+              const profileData = part.toolInvocation.args;
+              console.log('📊 Redirecting to profile with data:', profileData);
+              // Redirect to profile page with data
+              const profileParams = new URLSearchParams({
+                data: JSON.stringify(profileData)
+              });
+              router.push(`/profile?${profileParams.toString()}`);
+              return;
+            }
+          }
+        }
+      } catch (error) {
+        console.error('❌ Error parsing AI response:', error);
+        console.log('🔍 Full error details:', {
+          error,
+          message: message,
+          stack: error instanceof Error ? error.stack : 'No stack'
+        });
+        window.location.href = '/?error=' + encodeURIComponent('Error processing analysis response.');
+      }
+    }
+  });
+
+  const handleUrlSubmit = async (data: { url: string; email: string; poc: string }) => {
+    setAppState('loading');
+
+    // Store website URL in session storage for async logo loading
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('current_website_url', data.url);
+    }
+
+    const prompt = `Please analyze the website ${data.url} and extract comprehensive company information. Use the getWebsiteContent tool to retrieve the website content first, then use the redirectToProfile tool to redirect to the profile page with the extracted data:
+
+- company_name: The official company name
+- company_description: A brief description of what the company does
+- service_line: Array of services the company provides
+- tier1_keywords: Primary keywords this company would use to search for government opportunities
+- tier2_keywords: Secondary keywords for government contracting
+- emails: Use only this email: [${data.email}]
+- poc: Use this contact name: ${data.poc}
+
+Please ensure you use the redirectToProfile tool to redirect to the profile page with the extracted information.`;
+
+    console.log('📤 Sending prompt to LLM:', {
+      url: data.url,
+      email: data.email,
+      poc: data.poc,
+      promptLength: prompt.length,
+      fullPrompt: prompt
+    });
+
+    append({ role: 'user', content: prompt });
+  };
+
+  const handleClearError = () => {
+    // Clear error from URL
+    router.push('/');
+  };
+
+  const renderContent = () => {
+    switch (appState) {
+      case 'loading':
+        return <LoadingState />;
+      default:
+        return (
+          <WelcomeScreen
+            onUrlSubmit={handleUrlSubmit}
+            isLoading={isLoading}
+            errorMessage={errorMessage}
+            onClearError={handleClearError}
+          />
+        );
+    }
+  };
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="relative">
+      {renderContent()}
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+      {/* Debug Button - Only show if there are messages */}
+      {messages.length > 0 && (
+        <button
+          onClick={() => setShowDebugModal(true)}
+          className="fixed bottom-6 right-6 z-40 bg-purple-600 hover:bg-purple-700 text-white p-3 rounded-full shadow-lg transition-all hover:scale-105"
+          title="Debug LLM Console"
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        </button>
+      )}
+
+      {/* Debug Modal */}
+      <DebugModal
+        isOpen={showDebugModal}
+        onClose={() => setShowDebugModal(false)}
+        messages={messages}
+      />
     </div>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <HomePageComponent />
+    </Suspense>
   );
 }
