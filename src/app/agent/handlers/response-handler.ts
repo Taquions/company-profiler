@@ -21,11 +21,9 @@ export function createResponseHandler({ router }: UseAgentResponseHandlerProps) 
                 throw new Error('No parts in message');
             }
 
-            // Extract text content for agent summary
             let agentSummary = '';
             let hasRedirectTool = false;
 
-            // Check for tool invocations and text content
             for (const part of message.parts) {
                 if (part.type === 'text') {
                     agentSummary += part.text + '\n';
@@ -53,10 +51,8 @@ export function createResponseHandler({ router }: UseAgentResponseHandlerProps) 
 
                         console.log('📊 Redirecting to profile with data:', profileData);
 
-                        // Save agent conversation to sessionStorage
                         if (typeof window !== 'undefined') {
                             try {
-                                // Get original user prompt from sessionStorage
                                 const originalPrompt = sessionStorage.getItem('original_user_prompt') || 'Analyze company website';
 
                                 const agentConversation = {
@@ -68,7 +64,7 @@ export function createResponseHandler({ router }: UseAgentResponseHandlerProps) 
                                     assistantMessage: {
                                         id: (Date.now() + 1).toString(),
                                         role: 'assistant',
-                                        content: agentSummary.trim() || `Análise concluída para ${profileData.company_name}. Identifiquei informações sobre a empresa incluindo: nome da empresa, descrição do negócio, linhas de serviço, palavras-chave relevantes para contratos governamentais, e informações de contato. A empresa foi categorizada com base em seus serviços principais e potencial para oportunidades de contratação governamental.`
+                                        content: agentSummary.trim() || `Analysis completed for ${profileData.company_name}. I identified company information including: company name, business description, service lines, relevant keywords for government contracts, and contact information. The company was categorized based on its main services and potential for government contracting opportunities.`
                                     }
                                 };
 
@@ -88,7 +84,6 @@ export function createResponseHandler({ router }: UseAgentResponseHandlerProps) 
                 }
             }
 
-            // If we have text content but no redirect tool, it might be an error case
             if (agentSummary && !hasRedirectTool) {
                 console.log('📝 Agent provided summary without redirect:', agentSummary);
             }

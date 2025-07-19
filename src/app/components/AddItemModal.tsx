@@ -24,23 +24,27 @@ export default function AddItemModal({
 
   if (!isOpen) return null;
 
+  const validateEmail = (email: string) => {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
 
-    const trimmedValue = value.trim();
-    if (!trimmedValue) {
+    if (!value.trim()) {
       setError('This field is required');
       return;
     }
 
-    if (type === 'email' && !trimmedValue.includes('@')) {
+    if (type === 'email' && !validateEmail(value.trim())) {
       setError('Please enter a valid email address');
       return;
     }
 
-    onSubmit(trimmedValue);
-    setValue('');
-    setError('');
+    onSubmit(value.trim());
+    handleClose();
   };
 
   const handleClose = () => {
@@ -50,23 +54,23 @@ export default function AddItemModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-slate-800/95 backdrop-blur-lg border border-slate-600/50 rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl">
+    <div className="fixed inset-0 bg-neutral-dark/50 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 z-50">
+      <div className="bg-surface border border-default rounded-xl sm:rounded-2xl p-4 sm:p-6 w-full max-w-sm sm:max-w-md mx-3 sm:mx-4 shadow-xl">
         {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-semibold text-white">{title}</h3>
+        <div className="flex justify-between items-center mb-4 sm:mb-6">
+          <h3 className="text-lg sm:text-xl font-semibold text-primary">{title}</h3>
           <button
             onClick={handleClose}
-            className="text-gray-400 hover:text-white transition-colors"
+            className="text-muted hover:text-primary transition-colors p-1"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
           <div>
             <input
               type={type}
@@ -76,26 +80,26 @@ export default function AddItemModal({
                 setError('');
               }}
               placeholder={placeholder}
-              className="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-3 py-3 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="w-full bg-neutral-light border border-default rounded-lg px-3 py-2 sm:py-3 text-sm sm:text-base text-primary placeholder-muted focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
               autoFocus
             />
             {error && (
-              <p className="text-red-400 text-sm mt-2">{error}</p>
+              <p className="text-error text-xs sm:text-sm mt-2">{error}</p>
             )}
           </div>
 
           {/* Buttons */}
-          <div className="flex gap-3 pt-2">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-2 sm:pt-3">
             <button
               type="button"
               onClick={handleClose}
-              className="flex-1 bg-gray-600/50 hover:bg-gray-600/70 text-gray-300 font-medium py-3 px-4 rounded-lg transition-all"
+              className="flex-1 bg-neutral hover:bg-neutral-dark text-secondary font-medium py-2 sm:py-3 px-4 text-sm sm:text-base rounded-lg transition-all"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-all hover:scale-[1.02]"
+              className="flex-1 bg-primary hover:bg-primary-dark text-inverse font-medium py-2 sm:py-3 px-4 text-sm sm:text-base rounded-lg transition-all hover:scale-[1.02] shadow-md hover:shadow-lg"
             >
               Add
             </button>

@@ -14,11 +14,9 @@ export function useAgentChat() {
     });
 
     const analyzeWebsite = async (data: AnalysisData) => {
-        // Store website URL in session storage for async logo loading
         if (typeof window !== 'undefined') {
             sessionStorage.setItem('current_website_url', data.url);
 
-            // Store original user prompt for agent memory
             const userPrompt = `Analyze website: ${data.url} (Contact: ${data.poc}, Email: ${data.email})`;
             sessionStorage.setItem('original_user_prompt', userPrompt);
         }

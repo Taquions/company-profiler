@@ -12,7 +12,6 @@ async function extractCompanyLogo(html: string, baseUrl: string) {
 
         const $ = load(html);
 
-        // Look for favicon and icon links in order of preference
         const iconSelectors = [
             'link[rel="icon"][type="image/svg+xml"]',
             'link[rel="icon"][type="image/png"]',
@@ -35,13 +34,11 @@ async function extractCompanyLogo(html: string, baseUrl: string) {
             }
         }
 
-        // If no icon found in meta tags, try default favicon.ico
         if (!iconUrl) {
             iconUrl = '/favicon.ico';
             console.log('🔍 No icon meta tags found, trying default favicon.ico');
         }
 
-        // Convert relative URLs to absolute
         const baseUrlObject = new URL(baseUrl);
         const absoluteIconUrl = iconUrl.startsWith('http')
             ? iconUrl
@@ -49,7 +46,6 @@ async function extractCompanyLogo(html: string, baseUrl: string) {
 
         console.log('📸 Fetching logo from:', absoluteIconUrl);
 
-        // Download the icon
         const iconController = new AbortController();
         const iconTimeoutId = setTimeout(() => iconController.abort(), 15000);
 
@@ -79,7 +75,6 @@ async function extractCompanyLogo(html: string, baseUrl: string) {
             };
         }
 
-        // Convert to base64 for localStorage storage
         const arrayBuffer = await iconResponse.arrayBuffer();
         const base64 = Buffer.from(arrayBuffer).toString('base64');
         const dataUrl = `data:${contentType};base64,${base64}`;
@@ -159,7 +154,6 @@ export async function POST(request: NextRequest) {
 
         console.log('🚀 Async logo request started:', { url, companyName });
 
-        // First get website content
         const websiteResult = await getWebsiteContent(url);
 
         if (!websiteResult.success) {
@@ -169,7 +163,6 @@ export async function POST(request: NextRequest) {
             });
         }
 
-        // Then extract logo
         const logoResult = await extractCompanyLogo(websiteResult.html, url);
 
         console.log('✅ Async logo request completed:', {

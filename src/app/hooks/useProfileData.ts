@@ -23,7 +23,6 @@ export function useProfileData() {
                 dataSize: JSON.stringify(profileData).length
             });
 
-            // Handle logo storage and cleanup
             let logoBase64 = undefined;
             if (profileData.logo_base64 &&
                 typeof profileData.logo_base64 === 'string' &&
@@ -40,7 +39,6 @@ export function useProfileData() {
                 }
             }
 
-            // Convert the agent's format to our component format
             const formattedProfile: CompanyProfile = {
                 companyName: profileData.company_name || 'Unknown Company',
                 description: profileData.company_description || '',

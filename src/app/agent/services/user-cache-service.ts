@@ -29,7 +29,6 @@ export class UserCacheService {
 
             const data: CachedUserData = JSON.parse(cached);
 
-            // Check if cache is expired
             const lastUsed = new Date(data.lastUsed);
             const now = new Date();
             const daysDiff = (now.getTime() - lastUsed.getTime()) / (1000 * 3600 * 24);

@@ -2,8 +2,73 @@
 @plugin "daisyui";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f8f9fa;
+  --foreground: #2c3e50;
+
+  /* Warm Beige Light Theme Colors */
+  --color-primary: #e67e22;
+  --color-primary-dark: #d35400;
+  --color-secondary: #f39c12;
+  --color-accent: #27ae60;
+  --color-neutral: #ecf0f1;
+  --color-neutral-light: #f8f9fa;
+  --color-neutral-dark: #bdc3c7;
+
+  /* Surface colors */
+  --color-surface: #ffffff;
+  --color-surface-hover: #f8f9fa;
+  --color-surface-active: #ecf0f1;
+
+  /* Border colors */
+  --color-border: #ddd;
+  --color-border-hover: #bdc3c7;
+
+  /* Text colors */
+  --color-text-primary: #2c3e50;
+  --color-text-secondary: #34495e;
+  --color-text-muted: #7f8c8d;
+  --color-text-inverse: #ffffff;
+
+  /* Status colors */
+  --color-success: #27ae60;
+  --color-warning: #f39c12;
+  --color-error: #e74c3c;
+  --color-info: #3498db;
+}
+
+[data-theme="dark"] {
+  --background: #1a1825;
+  --foreground: #e8e5f0;
+
+  /* Pastel Dark Theme Colors */
+  --color-primary: #7c8ae8;
+  --color-primary-dark: #6b7ae6;
+  --color-secondary: #e87cb5;
+  --color-accent: #7ce8b5;
+  --color-neutral: #2d2a3d;
+  --color-neutral-light: #3a3548;
+  --color-neutral-dark: #221f2e;
+
+  /* Surface colors */
+  --color-surface: #221f2e;
+  --color-surface-hover: #2d2a3d;
+  --color-surface-active: #3a3548;
+
+  /* Border colors */
+  --color-border: #3a3548;
+  --color-border-hover: #46425a;
+
+  /* Text colors */
+  --color-text-primary: #e8e5f0;
+  --color-text-secondary: #b8b4c5;
+  --color-text-muted: #8b8195;
+  --color-text-inverse: #2d2a3d;
+
+  /* Status colors */
+  --color-success: #6bb577;
+  --color-warning: #e8b56b;
+  --color-error: #e86b7c;
+  --color-info: #6bb5e8;
 }
 
 @theme inline {
@@ -13,15 +78,106 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Utility classes for the new color system */
+.bg-primary {
+  background-color: var(--color-primary);
+}
+
+.bg-primary-dark {
+  background-color: var(--color-primary-dark);
+}
+
+.bg-secondary {
+  background-color: var(--color-secondary);
+}
+
+.bg-accent {
+  background-color: var(--color-accent);
+}
+
+.bg-surface {
+  background-color: var(--color-surface);
+}
+
+.bg-surface-hover {
+  background-color: var(--color-surface-hover);
+}
+
+.bg-surface-active {
+  background-color: var(--color-surface-active);
+}
+
+.bg-neutral {
+  background-color: var(--color-neutral);
+}
+
+.bg-neutral-light {
+  background-color: var(--color-neutral-light);
+}
+
+.bg-neutral-dark {
+  background-color: var(--color-neutral-dark);
+}
+
+.text-primary {
+  color: var(--color-text-primary);
+}
+
+.text-secondary {
+  color: var(--color-text-secondary);
+}
+
+.text-muted {
+  color: var(--color-text-muted);
+}
+
+.text-inverse {
+  color: var(--color-text-inverse);
+}
+
+.border-default {
+  border-color: var(--color-border);
+}
+
+.border-hover {
+  border-color: var(--color-border-hover);
+}
+
+.text-success {
+  color: var(--color-success);
+}
+
+.text-warning {
+  color: var(--color-warning);
+}
+
+.text-error {
+  color: var(--color-error);
+}
+
+.text-info {
+  color: var(--color-info);
+}
+
+.bg-success {
+  background-color: var(--color-success);
+}
+
+.bg-warning {
+  background-color: var(--color-warning);
+}
+
+.bg-error {
+  background-color: var(--color-error);
+}
+
+.bg-info {
+  background-color: var(--color-info);
 }

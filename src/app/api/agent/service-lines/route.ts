@@ -3,7 +3,6 @@ import { generateObject } from 'ai';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-// Schema de validação para a request
 const ServiceLineRequestSchema = z.object({
     companyProfile: z.object({
         companyName: z.string(),
@@ -21,7 +20,6 @@ const ServiceLineRequestSchema = z.object({
     }))
 });
 
-// System prompt para geração de service lines
 const SERVICE_LINE_SYSTEM_PROMPT = `You are a specialized AI agent designed to analyze company websites and extract structured business information to create comprehensive company profiles. Your primary function is to help users understand companies and their potential for government contracting opportunities.
 
 When a user asks to generate new service lines for their company profile, analyze the existing company information and generate relevant service lines that complement the existing ones.
@@ -39,7 +37,6 @@ export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
     try {
-        // Parse e valida o body da request
         const body = await request.json();
         const { companyProfile, additionalContext, quantity, agentMemory } = ServiceLineRequestSchema.parse(body);
 
@@ -50,7 +47,6 @@ export async function POST(request: NextRequest) {
             memoryMessages: agentMemory.length
         });
 
-        // Constrói o prompt para geração
         const userPrompt = `Based on the company profile you have already analyzed, generate ${quantity} new service line that would complement the past one you have generated.
 
 Services line generated: ${companyProfile.serviceLines.join(', ')}
@@ -64,13 +60,11 @@ Please respond with ONLY a JSON object in this exact format:
 
 Generate exactly ${quantity} service line(s). Make them specific and relevant to the company's business. Consider our previous conversation to avoid repetition and build upon previous suggestions.`;
 
-        // Constrói array de mensagens com contexto
         const messages = [
             {
                 role: 'system' as const,
                 content: SERVICE_LINE_SYSTEM_PROMPT
             },
-            // Inclui últimas 4 mensagens do agent memory para contexto
             ...agentMemory.slice(-4).map(msg => ({
                 role: msg.role,
                 content: msg.content
@@ -81,7 +75,6 @@ Generate exactly ${quantity} service line(s). Make them specific and relevant to
             }
         ];
 
-        // Chama OpenAI para gerar service lines
         const result = await generateObject({
             model: openai('gpt-4.1-mini'),
             messages,
@@ -108,7 +101,6 @@ Generate exactly ${quantity} service line(s). Make them specific and relevant to
     } catch (error) {
         console.error('❌ Agent Service Lines API error:', error);
 
-        // Handle validation errors
         if (error instanceof z.ZodError) {
             return NextResponse.json(
                 {
@@ -120,7 +112,6 @@ Generate exactly ${quantity} service line(s). Make them specific and relevant to
             );
         }
 
-        // Handle generic errors
         return NextResponse.json(
             {
                 success: false,

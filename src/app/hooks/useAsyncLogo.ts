@@ -10,7 +10,6 @@ export function useAsyncLogo(companyName: string, websiteUrl?: string) {
         let isMounted = true;
 
         const loadLogo = async () => {
-            // First, try to load from localStorage
             const savedLogo = LogoService.getFromLocalStorage(companyName);
             if (savedLogo && isMounted) {
                 setLogoBase64(savedLogo);
@@ -18,7 +17,6 @@ export function useAsyncLogo(companyName: string, websiteUrl?: string) {
                 return;
             }
 
-            // If no logo in localStorage and we have a website URL, try to fetch it
             if (websiteUrl && isMounted) {
                 setIsLoadingLogo(true);
                 setLogoError(null);

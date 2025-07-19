@@ -1,36 +1,213 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🏢 Company Profiler
 
-## Getting Started
+An AI-powered company analysis tool that automatically generates comprehensive company profiles by analyzing website content. Built with Next.js, TypeScript, and advanced AI integration.
 
-First, run the development server:
+## ✨ Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+### 🤖 AI-Powered Analysis
+- **Website Content Extraction**: Automatically scrapes and analyzes company websites
+- **Company Logo Detection**: Retrieves and displays company logos
+- **Service Line Generation**: AI-generated service descriptions based on website analysis
+- **Keyword Extraction**: Automatically identifies Tier 1 and Tier 2 keywords
+- **Contact Information Mining**: Extracts emails and contact details
+
+### 🎨 Modern UI/UX
+- **Fully Responsive Design**: Optimized for mobile, tablet, and desktop
+- **Dark/Light Theme Support**: Built-in theme switching
+- **Animated Gradients**: Beautiful background animations
+- **Modal-Based Interactions**: Smooth modal workflows
+- **Loading States**: Engaging progress indicators
+
+### 📊 Profile Management
+- **Interactive Editing**: Edit all profile fields inline
+- **JSON Export**: Export profiles in JSON format
+- **Real-time Updates**: Live preview of changes
+- **Data Validation**: Built-in form validation
+
+### 🔧 Technical Features
+- **TypeScript**: Full type safety throughout the application
+- **Tailwind CSS + DaisyUI**: Modern styling framework
+- **Custom Hooks**: Reusable React hooks for data management
+- **Service Architecture**: Modular service layer
+- **Error Handling**: Comprehensive error management
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js 18+ 
+- npm or yarn
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone [repository-url]
+   cd mccarren-challenge
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Start development server**
+   ```bash
+   npm run dev
+   ```
+
+4. **Open your browser**
+   Navigate to [http://localhost:3000](http://localhost:3000)
+
+## 📁 Project Structure
+
+```
+src/
+├── app/
+│   ├── agent/                 # AI agent logic
+│   │   ├── handlers/          # Response handlers
+│   │   ├── services/          # Business logic services
+│   │   ├── tools/             # AI tools and utilities
+│   │   └── types/             # TypeScript definitions
+│   ├── api/                   # API routes
+│   │   ├── agent/             # Main agent endpoint
+│   │   └── logo/              # Logo retrieval endpoint
+│   ├── components/            # React components
+│   │   ├── ui/                # UI components
+│   │   └── [modals/pages]     # Feature components
+│   ├── contexts/              # React contexts
+│   ├── hooks/                 # Custom React hooks
+│   └── utils/                 # Utility functions
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🛠 Available Scripts
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm start` - Start production server
+- `npm run lint` - Run ESLint
+- `npm run test:ut` - Run unit tests with Vitest
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🎯 How It Works
 
-## Learn More
+### 1. **Website Analysis**
+   - User enters a company website URL
+   - AI agent analyzes the website content
+   - Extracts company information, services, and contacts
 
-To learn more about Next.js, take a look at the following resources:
+### 2. **Profile Generation**
+   - Creates structured company profile
+   - Generates service lines using AI
+   - Identifies relevant keywords
+   - Retrieves company logo
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 3. **Interactive Editing**
+   - Users can edit any field in the profile
+   - Add custom service lines manually or via AI
+   - Export final profile as JSON
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🧪 Testing
 
-## Deploy on Vercel
+Run unit tests:
+```bash
+npm run test:ut
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Run specific test file:
+```bash
+npm run test:ut "filename"
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🎨 Styling
+
+The project uses:
+- **Tailwind CSS** for utility-first styling
+- **DaisyUI** for component library
+- **Custom CSS Variables** for theming
+- **Responsive Design** with mobile-first approach
+
+## 🔧 Configuration
+
+### Environment Variables
+Create a `.env.local` file:
+```env
+# Add your environment variables here
+NEXT_PUBLIC_API_URL=your_api_url
+```
+
+### Tailwind Configuration
+Styling is configured in:
+- `tailwind.config.js`
+- `src/app/globals.css`
+
+## 🚀 Deployment
+
+### Vercel (Recommended)
+1. Connect your repository to Vercel
+2. Deploy automatically on every push to main
+
+### Manual Deployment
+```bash
+npm run build
+npm start
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Run tests and linting
+5. Submit a pull request
+
+## 📝 API Endpoints
+
+- `POST /api/agent` - Main AI agent analysis
+- `POST /api/agent/service-lines` - Generate service lines
+- `GET /api/logo` - Retrieve company logo
+
+## 🔍 Features in Detail
+
+### AI Agent Tools
+- `getWebsiteContent` - Scrapes website content
+- `getCompanyLogo` - Retrieves company logos
+- `redirectToProfile` - Navigation handling
+- `returnToHomeWithError` - Error handling
+
+### Custom Hooks
+- `useAgentChat` - AI conversation management
+- `useAsyncLogo` - Logo loading
+- `useProfileData` - Profile state management
+- `useServiceLineGeneration` - AI service generation
+
+### Services
+- `LogoService` - Logo management and caching
+- `ServiceLineGenerator` - AI-powered service generation
+- `UserCacheService` - User data caching
+
+## 📱 Responsive Breakpoints
+
+- **Mobile**: `< 640px`
+- **Tablet**: `sm: ≥ 640px`
+- **Desktop Small**: `md: ≥ 768px`
+- **Desktop Medium**: `lg: ≥ 1024px`
+- **Desktop Large**: `xl: ≥ 1280px`
+
+## 🏗 Built With
+
+- [Next.js](https://nextjs.org/) - React framework
+- [TypeScript](https://www.typescriptlang.org/) - Type safety
+- [Tailwind CSS](https://tailwindcss.com/) - Styling
+- [DaisyUI](https://daisyui.com/) - Component library
+- [Vitest](https://vitest.dev/) - Testing framework
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+## 🆘 Support
+
+For support, please open an issue in the repository or contact the development team.
+
+---
+
+Built with ❤️ by the development team

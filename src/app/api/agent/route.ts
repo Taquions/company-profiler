@@ -16,7 +16,6 @@ export async function POST(request: NextRequest) {
             timestamp: new Date().toISOString()
         });
 
-        // Stream response from OpenAI with tools
         const result = await streamText({
             model: openai('gpt-4.1-mini'),
             system: SYSTEM_PROMPT,

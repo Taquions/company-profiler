@@ -31,7 +31,6 @@ export function useServiceLineGeneration() {
 
             const generatedServiceLines = await serviceLineGenerator.generateServiceLines(params);
 
-            // Filter out any duplicates with existing service lines
             const uniqueServiceLines = generatedServiceLines.filter(line =>
                 !companyProfile.serviceLines.includes(line)
             );
