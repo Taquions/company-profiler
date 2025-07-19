@@ -1,4 +1,4 @@
-# �� Company Profiler
+# Company Profiler
 
 Uma ferramenta de análise empresarial baseada em IA que gera automaticamente perfis abrangentes de empresas analisando conteúdo de websites. Construída com Next.js, TypeScript, e integração avançada de IA.
 
